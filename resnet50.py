@@ -29,55 +29,110 @@ class Bottleneck(nn.Module):
         self.downsample = downsample
         self.stride = stride
 
-    def forward(self, x, residual=0, subpartition=0):
-        if subpartition == 0:
-            residual = x
+    def forward(self, x, server=True, residual=0, subpartition=0):
+        if server:
+            if subpartition == 0:
+                residual = x
 
-            x = self.conv1(x)
-            x = self.bn1(x)
-            x = self.relu(x)
+                x = self.conv1(x)
+                x = self.bn1(x)
+                x = self.relu(x)
 
-            x = self.conv2(x)
-            x = self.bn2(x)
-            x = self.relu(x)
+                x = self.conv2(x)
+                x = self.bn2(x)
+                x = self.relu(x)
 
-            x = self.conv3(x)
-            x = self.bn3(x)
+                x = self.conv3(x)
+                x = self.bn3(x)
 
-            if self.downsample is not None:
-                residual = self.downsample(residual)
+                if self.downsample is not None:
+                    residual = self.downsample(residual)
 
-            x += residual
-            x = self.relu(x)
-        elif subpartition == 1:
-            x = self.conv2(x)
-            x = self.bn2(x)
-            x = self.relu(x)
+                x += residual
+                x = self.relu(x)
+            elif subpartition == 1:
+                x = self.conv2(x)
+                x = self.bn2(x)
+                x = self.relu(x)
 
-            x = self.conv3(x)
-            x = self.bn3(x)
+                x = self.conv3(x)
+                x = self.bn3(x)
 
-            if self.downsample is not None:
-                residual = self.downsample(residual)
+                if self.downsample is not None:
+                    residual = self.downsample(residual)
 
-            x += residual
-            x = self.relu(x)
-        elif subpartition == 2:
-            x = self.conv3(x)
-            x = self.bn3(x)
+                x += residual
+                x = self.relu(x)
+            elif subpartition == 2:
+                x = self.conv3(x)
+                x = self.bn3(x)
 
-            if self.downsample is not None:
-                residual = self.downsample(residual)
+                if self.downsample is not None:
+                    residual = self.downsample(residual)
 
-            x += residual
-            x = self.relu(x)
-        elif subpartition == 3:
-            if self.downsample is not None:
-                residual = self.downsample(residual)
+                x += residual
+                x = self.relu(x)
+            elif subpartition == 3:
+                if self.downsample is not None:
+                    residual = self.downsample(residual)
 
-            x += residual
-            x = self.relu(x)
-        return x
+                x += residual
+                x = self.relu(x)
+            elif subpartition == 4:
+                x = x
+            return x
+        else:
+            if subpartition == 0:
+                x = x
+            elif subpartition == 1:
+                residual = x
+
+                x = self.conv1(x)
+                x = self.bn1(x)
+                x = self.relu(x)
+            elif subpartition == 2:
+                residual = x
+
+                x = self.conv1(x)
+                x = self.bn1(x)
+                x = self.relu(x)
+
+                x = self.conv2(x)
+                x = self.bn2(x)
+                x = self.relu(x)
+            elif subpartition == 3:
+                residual = x
+
+                x = self.conv1(x)
+                x = self.bn1(x)
+                x = self.relu(x)
+
+                x = self.conv2(x)
+                x = self.bn2(x)
+                x = self.relu(x)
+
+                x = self.conv3(x)
+                x = self.bn3(x)
+            elif subpartition == 4:
+                residual = x
+
+                x = self.conv1(x)
+                x = self.bn1(x)
+                x = self.relu(x)
+
+                x = self.conv2(x)
+                x = self.bn2(x)
+                x = self.relu(x)
+
+                x = self.conv3(x)
+                x = self.bn3(x)
+
+                if self.downsample is not None:
+                    residual = self.downsample(residual)
+
+                x += residual
+                x = self.relu(x)
+            return x, residual
 
 
 class ResNet(nn.Module):
@@ -203,7 +258,8 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 3:
-                x = self.layer1(x, residua=residual, subpartition=1)
+                x = self.layer1[0](x, residua=residual, subpartition=1)
+                x = self.layer1[1:](x)
                 x = self.layer2(x)
                 x = self.layer3(x)
                 x = self.layer4(x)
@@ -211,7 +267,8 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 4:
-                x = self.layer1(x, residua=residual, subpartition=2)
+                x = self.layer1[0](x, residua=residual, subpartition=2)
+                x = self.layer1[1:](x)
                 x = self.layer2(x)
                 x = self.layer3(x)
                 x = self.layer4(x)
@@ -219,7 +276,8 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 5:
-                x = self.layer1(x, residua=residual, subpartition=3)
+                x = self.layer1[0](x, residua=residual, subpartition=3)
+                x = self.layer1[1:](x)
                 x = self.layer2(x)
                 x = self.layer3(x)
                 x = self.layer4(x)
@@ -236,7 +294,8 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 7:
-                x = self.layer1[1:](x, residua=residual, subpartition=1)
+                x = self.layer1[1](x, residua=residual, subpartition=1)
+                x = self.layer1[2](x)
                 x = self.layer2(x)
                 x = self.layer3(x)
                 x = self.layer4(x)
@@ -244,7 +303,8 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 8:
-                x = self.layer1[1:](x, residua=residual, subpartition=2)
+                x = self.layer1[1](x, residua=residual, subpartition=2)
+                x = self.layer1[2](x)
                 x = self.layer2(x)
                 x = self.layer3(x)
                 x = self.layer4(x)
@@ -252,7 +312,8 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 9:
-                x = self.layer1[1:](x, residua=residual, subpartition=3)
+                x = self.layer1[1](x, residua=residual, subpartition=3)
+                x = self.layer1[2](x)
                 x = self.layer2(x)
                 x = self.layer3(x)
                 x = self.layer4(x)
@@ -301,21 +362,24 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 15:
-                x = self.layer2(x, residua=residual, subpartition=1)
+                x = self.layer2[0](x, residua=residual, subpartition=1)
+                x = self.layer2[1:](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 16:
-                x = self.layer2(x, residua=residual, subpartition=2)
+                x = self.layer2[0](x, residua=residual, subpartition=2)
+                x = self.layer2[1:](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 17:
-                x = self.layer2(x, residua=residual, subpartition=3)
+                x = self.layer2[0](x, residua=residual, subpartition=3)
+                x = self.layer2[1:](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
@@ -330,21 +394,24 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 19:
-                x = self.layer2[1:](x, residua=residual, subpartition=1)
+                x = self.layer2[1](x, residua=residual, subpartition=1)
+                x = self.layer2[2:](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 20:
-                x = self.layer2[1:](x, residua=residual, subpartition=2)
+                x = self.layer2[1](x, residua=residual, subpartition=2)
+                x = self.layer2[2:](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 21:
-                x = self.layer2[1:](x, residua=residual, subpartition=3)
+                x = self.layer2[1](x, residua=residual, subpartition=3)
+                x = self.layer2[2:](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
@@ -359,21 +426,24 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 23:
-                x = self.layer2[2:](x, residua=residual, subpartition=1)
+                x = self.layer2[2](x, residua=residual, subpartition=1)
+                x = self.layer2[3](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 24:
-                x = self.layer2[2:](x, residua=residual, subpartition=2)
+                x = self.layer2[2](x, residua=residual, subpartition=2)
+                x = self.layer2[3](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 25:
-                x = self.layer2[2:](x, residua=residual, subpartition=3)
+                x = self.layer2[2](x, residua=residual, subpartition=3)
+                x = self.layer2[3](x)
                 x = self.layer3(x)
                 x = self.layer4(x)
 
@@ -416,19 +486,22 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 28:
-                x = self.layer3(x, residua=residual, subpartition=1)
+                x = self.layer3[0](x, residua=residual, subpartition=1)
+                x = self.layer3[1:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 29:
-                x = self.layer3(x, residua=residual, subpartition=2)
+                x = self.layer3[0](x, residua=residual, subpartition=2)
+                x = self.layer3[1:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 30:
-                x = self.layer3(x, residua=residual, subpartition=3)
+                x = self.layer3[0](x, residua=residual, subpartition=3)
+                x = self.layer3[1:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
@@ -441,44 +514,50 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 32:
-                x = self.layer3[1:](x, residua=residual, subpartition=1)
+                x = self.layer3[1](x, residua=residual, subpartition=1)
+                x = self.layer3[2:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 33:
-                x = self.layer3[1:](x, residua=residual, subpartition=2)
+                x = self.layer3[1](x, residua=residual, subpartition=2)
+                x = self.layer3[2:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 34:
-                x = self.layer3[1:](x, residua=residual, subpartition=3)
+                x = self.layer3[1](x, residua=residual, subpartition=3)
+                x = self.layer3[2:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             # partition layer3, block3
             elif partition == 35:
-                x = self.layer3[2:](x)
+                x = self.layer3[2](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 36:
-                x = self.layer3[2:](x, residua=residual, subpartition=1)
+                x = self.layer3[2](x, residua=residual, subpartition=1)
+                x = self.layer3[3:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 37:
-                x = self.layer3[2:](x, residua=residual, subpartition=2)
+                x = self.layer3[2](x, residua=residual, subpartition=2)
+                x = self.layer3[3:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 38:
-                x = self.layer3[2:](x, residua=residual, subpartition=3)
+                x = self.layer3[2](x, residua=residual, subpartition=3)
+                x = self.layer3[3:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
@@ -491,19 +570,22 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 40:
-                x = self.layer3[3:](x, residua=residual, subpartition=1)
+                x = self.layer3[3](x, residua=residual, subpartition=1)
+                x = self.layer3[4:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 41:
-                x = self.layer3[3:](x, residua=residual, subpartition=2)
+                x = self.layer3[3](x, residua=residual, subpartition=2)
+                x = self.layer3[4:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 42:
-                x = self.layer3[3:](x, residua=residual, subpartition=3)
+                x = self.layer3[3](x, residua=residual, subpartition=3)
+                x = self.layer3[4:](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
@@ -516,26 +598,29 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 44:
-                x = self.layer3[4:](x, residua=residual, subpartition=1)
+                x = self.layer3[4](x, residua=residual, subpartition=1)
+                x = self.layer3[5](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 45:
-                x = self.layer3[4:](x, residua=residual, subpartition=2)
+                x = self.layer3[4](x, residua=residual, subpartition=2)
+                x = self.layer3[5](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 46:
-                x = self.layer3[4:](x, residua=residual, subpartition=3)
+                x = self.layer3[4](x, residua=residual, subpartition=3)
+                x = self.layer3[5](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             # partition layer3, block6
             elif partition == 47:
-                x = self.layer3[5:](x)
+                x = self.layer3[5](x)
                 x = self.layer4(x)
 
                 x = self.deconv_layers(x)
@@ -565,17 +650,20 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 52:
-                x = self.layer4(x, residua=residual, subpartition=1)
+                x = self.layer4[0](x, residua=residual, subpartition=1)
+                x = self.layer4[1:](x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 53:
-                x = self.layer4(x, residua=residual, subpartition=2)
+                x = self.layer4[0](x, residua=residual, subpartition=2)
+                x = self.layer4[1:](x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 54:
-                x = self.layer4(x, residua=residual, subpartition=3)
+                x = self.layer4[0](x, residua=residual, subpartition=3)
+                x = self.layer4[1:](x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
@@ -586,17 +674,20 @@ class ResNet(nn.Module):
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 56:
-                x = self.layer4[1:](x, residua=residual, subpartition=1)
+                x = self.layer4[1](x, residua=residual, subpartition=1)
+                x = self.layer4[2](x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 57:
-                x = self.layer4[1:](x, residua=residual, subpartition=2)
+                x = self.layer4[1](x, residua=residual, subpartition=2)
+                x = self.layer4[2](x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
             elif partition == 58:
-                x = self.layer4[1:](x, residua=residual, subpartition=3)
+                x = self.layer4[1](x, residua=residual, subpartition=3)
+                x = self.layer4[2](x)
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
@@ -621,6 +712,13 @@ class ResNet(nn.Module):
 
                 x = self.deconv_layers(x)
                 x = self.final_layer(x)
+            elif partition == 63:
+                x = self.deconv_layers(x)
+                x = self.final_layer(x)
+            elif partition == 64:
+                x = self.final_layer(x)
+            elif partition == 65:
+                x = x
         return x
 
 resnet_spec = {50: (Bottleneck, [3, 4, 6, 3]),
