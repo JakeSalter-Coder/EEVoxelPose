@@ -1,0 +1,372 @@
+RESNET-50
+Panoptic Dataset
+
+block: BOTTLENECK
+layers: [3,4,6,3]
+
+batch_size x channels x height x width
+
+8x3x960x512 (image)
+	|
+conv(in=3, out=64, kernel_size=7, stride=2, padding=3)
+	|
+8x64x480x256
+	|
+batch_norm(64, momentum=0.1)
+	|
+relu()
+	|
+maxpool(kernel_size=3, stride=2, padding=1)
+	|
+8x64x240x128
+	|
+Residual Block 1 (inplanes=64, planes=64, layers=3, stride=1)
+-------------------------------------------------------------------
+8x64x240x128---------------------------------------------
+	|						|
+conv1_1(in=64, out=64, kernel_size=1, stride=1)		|
+	|						|
+8x64x240x128						|
+	|						|	
+batch_norm1_1()						|
+	|						|
+relu1_1()						|
+	|						|
+8x64x240x128						|
+	|						|
+conv1_2(in=64, out=64, kernal_size=3, stride=1, padding=1)
+	|						|
+8x64x240x128						|
+	|						|
+batch_norm1_2()						|
+	|						|
+relu1_2()						|
+	|						|
+conv1_3(in=64, out=64, kernel_size=1, stride=1)		|
+	|						|
+8x256x240x128						|
+	|						|
+batch_norm1_3()						|
+	|						|	
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+8x256x240x128--------------------------------------------
+	|						|
+conv2_1(in=256, out=64, kernel_size=1, stride=1)	|
+	|						|
+8x64x240x128						|
+	|						|
+batch_norm2_1()						|
+	|						|
+relu2_1()						|
+     	|						|
+conv2_2(in=64, out=64, kernel_size=3, stride=1, padding=1)
+	|						|
+8x64x240x128						|
+	|						|
+batch_norm2_2()						|
+	|						|
+relu2_2()						|
+	|						|
+conv2_3(in=64, out=256, kernel_size=1, stride=1)	|
+	|						|
+8x256x240x128						|
+	|						|
+batch_norm2_3()						|
+	|						|
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+8x256x240x128--------------------------------------------
+	|						|
+conv3_1(in=256, out=64, kernel_size=1, stride=1)	|
+	|						|
+8x64x240x128						|
+	|						|
+batch_norm3_1()						|
+	|						|
+relu3_1()						|
+     	|						|
+conv3_2(in=64, out=64, kernel_size=3, stride=1, padding=1)
+	|						|
+8x64x240x128						|
+	|						|
+batch_norm3_2()						|
+	|						|
+relu3_2()						|
+	|						|
+conv3_3(in=64, out=256, kernel_size=1, stride=1)	|
+	|						|
+8x256x240x128						|
+	|						|
+batch_norm2_3()						|
+	|						|
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+Residual Block 2 (inplanes=256, planes=128, layers=4, stride=2)
+-------------------------------------------------------------------
+8x256x240x128-------------------------------------------|
+	|						|
+conv1_1(256, 128, kernel_size=1)			|
+	|						|
+8x128x240x128						|
+	|						|
+batch_norm1_1()						|
+	|						|
+relu1_1()						|
+	|						|
+8x128x240x128						|
+	|						|
+conv1_2(128, 128, kernel_size=3, stride=2, padding=1)	|
+	|						|
+batch_norm1_2()						|
+	|						conv(256, 512, stride=2)
+relu1_2()						|
+	|						512x45x72
+8x128x120x64						|
+	|						batch_norm()
+conv1_3(128, 512, kernel_size=1, stride=1)		|
+	|						|
+8x512x120x64						|
+	|						|
+batch_norm1_3()						|
+	|						|
+residual<-+----------------------------------------------
+	|
+relu()	
+	|
+8x512x120x64--------------------------------------------|
+	|						|
+conv2_1(512, 128)					|
+	|						|
+8x128x120x64						|
+	|						|
+batch_norm2_1()						|	
+	|						|
+relu2_1()						|
+	|						|
+conv2_2(128, 128, kernel_size=3, padding=1)		|	
+	|						|	
+8x128x120x64						|
+	|						|
+batch_norm2_2()						|
+	|						|
+relu2_2()						|
+	|						|
+conv2_3(128, 512)					|
+	|						|
+8x128x120x64						|
+	|						|
+batch_norm2_3()						|
+	|						|	
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+8x512x120x64--------------------------------------------|
+	|						|
+conv3_1(512, 128)					|
+	|						|
+8x128x120x64						|
+	|						|
+batch_norm3_1()						|	
+	|						|
+relu3_1()						|
+	|						|
+conv3_2(128, 128, kernel_size=3, padding=1)		|	
+	|						|	
+8x128x120x64						|
+	|						|
+batch_norm3_2()						|
+	|						|
+relu3_2()						|
+	|						|
+conv3_3(128, 512)					|
+	|						|
+8x512x120x64						|
+	|						|
+batch_norm3_3()						|
+	|						|	
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+8x512x120x64--------------------------------------------|
+	|						|
+conv4_1(512, 128)					|
+	|						|
+8x128x120x64						|
+	|						|
+batch_norm4_1()						|	
+	|						|
+relu4_1()						|
+	|						|
+conv4_2(128, 128, kernel_size=3, padding=1)		|	
+	|						|	
+8x128x120x64						|
+	|						|
+batch_norm4_2()						|
+	|						|
+relu4_2()						|
+	|						|
+conv4_3(128, 512)					|
+	|						|
+8x512x120x64						|
+	|						|
+batch_norm4_3()						|
+	|						|	
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+Residual Block 3 (inplanes=512, planes=256, layers=6, stride=2)
+-------------------------------------------------------------------
+8x512x120x64--------------------------------------------|
+	|						|
+conv1_1(512, 256)					|
+	|						|
+8x256x120x64						|
+	|						|
+batch_norm1_1()						|
+	|						|
+relu1_1()						|
+	|						|
+conv1_2(256, 256, kernel_size=3, stride=2, padding=1)	|
+	|						|
+8x256x60x32						|
+	|						|
+batch_norm1_2()						conv(512, 1024, stride=2)
+	|						|
+relu1_2()						batch_norm()
+	|						|
+conv1_3(256, 1024)					|
+	|						|
+8x1024x60x32						|
+	|						|
+batch_norm1_3()						|
+	|						|
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+8x1024x60x32---------------------------------------------
+	|						|
+conv2_1(1024, 256)					|
+	|						|
+batch_norm2_1()						|
+	|						|
+relu2_1()						|
+	|						|
+conv2_2(256, 256)					|
+	|						|
+batch_norm2_2()						|
+	|						|
+relu2_2()						|
+	|						|
+conv2_3(256, 1024)					|
+	|						|
+batch_norm()						|
+	|						|
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+(repeat until layer==6)
+	|
+Residual Block 4 (inplanes=1024, planes=512, layers=3, stride=2)
+-------------------------------------------------------------------
+8x1024x60x32--------------------------------------------|
+	|						|
+conv1_1(1024, 512)					|
+	|						|
+batch_norm1_1()						|
+	|						|
+relu1_1()						|
+	|						|
+conv1_2(512, 512, kernel_size=3, padding=1, stride=2)	|
+	|						|
+8x512x30x16						|
+	|						|
+batch_norm1_2()						|
+	|						conv(1024, 2048, stride=2)
+relu1_2()						|
+	|						batch_norm()
+conv3(542, 2048)					|
+	|						|
+batch_norm1_3()						|
+	|						|
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+8x2048x30x16---------------------------------------------
+	|						|
+conv2_1(2048, 512)					|
+	|						|
+batch_norm2_1()						|
+	|						|
+relu2_1()						|
+	|						|
+conv2_2(512, 512)					|
+	|						|
+batch_norm2_2()						|
+	|						|
+relu2_2()						|
+	|						|	
+conv2_3(512, 2048)					|
+	|						|
+batch_norm2_3()						|
+	|						|
+residual<-+----------------------------------------------
+	|
+relu()
+	|
+(repeat until layer==3)
+	|
+8x2048x30x16
+	|
+Deconv Layer(	num_deconv=3, 
+		num_deconv_filter=[256,256,256], 
+		num_deconv_kernels=[4,4,4], 
+		final_deconv_kernel=1,
+		padding=1,
+		outpt_padgin=1)
+-------------------------------------------------------------------
+	|
+8x2048x30x16
+	|
+convTranspose(2048, 256, kernel=4, stride=2, padding=1, output_padding=0)
+	|
+batch_norm()
+	|
+relu()
+	|
+8x256x60x32
+	|
+convTranspose(256, 256, kernel=4, stride=2, padding=1, output_padding=0)
+	|
+batch_norm()
+	|
+relu()
+	|
+8x256x120x64
+	|
+convTranspose(256, 256, kernel=4, stride=2, padding=1, output_padding=0)
+	|
+batch_norm()
+	|
+relu()	
+	|
+8x256x240x128
+	|
+Final Layer num_joints=15
+-------------------------------------------------------------------
+	|
+conv2(256, 15, kernel=1, stride=1, padding=0)
+	|
+8x15x240x128
