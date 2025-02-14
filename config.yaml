@@ -17,7 +17,7 @@ DATASET:
   TRAIN_DATASET: 'panoptic'
   TRAIN_HEATMAP_SRC: 'image'
   TEST_DATASET: 'panoptic'
-  TEST_HEATMAP_SRC: 'image'
+  TEST_HEATMAP_SRC: 'pred'
   CAMERA_NUM: 5
   ORI_IMAGE_SIZE: 
     - 1920
@@ -32,7 +32,7 @@ DATASET:
   ROOT_JOINT_ID: 2
 
 NETWORK:
-  PRETRAINED_BACKBONE: "backbone/pose_resnet50_panoptic.pth.tar"
+  PRETRAINED_BACKBONE: "pose_resnet50_panoptic.pth.tar"
   NUM_CHANNEL_JOINT_FEAT: 32
   NUM_CHANNEL_JOINT_HIDDEN: 64
   SIGMA: 3
