@@ -13,6 +13,83 @@ import lib.models.faster_voxelpose as fastervoxelpose
 from config import config, update_config
 
 
+def get_dir(src_point, rot_rad):
+    sn, cs = np.sin(rot_rad), np.cos(rot_rad)
+
+    src_result = [0, 0]
+    src_result[0] = src_point[0] * cs - src_point[1] * sn
+    src_result[1] = src_point[0] * sn + src_point[1] * cs
+
+    return src_result
+
+
+def get_3rd_point(a, b):
+    direct = a - b
+    return np.array(b) + np.array([-direct[1], direct[0]], dtype=np.float32)
+
+
+def get_affine_transform(center, scale, rot, output_size, shift=np.array([0, 0], dtype=np.float32), inv=0):
+    if isinstance(scale, torch.Tensor):
+        scale = np.array(scale.cpu())
+    if isinstance(center, torch.Tensor):
+        center = np.array(center.cpu())
+    if not isinstance(scale, np.ndarray) and not isinstance(scale, list):
+        scale = np.array([scale, scale])
+
+    scale_tmp = scale * 200.0
+    src_w, src_h = scale_tmp[0], scale_tmp[1]
+    dst_w, dst_h = output_size[0], output_size[1]
+
+    rot_rad = np.pi * rot / 180
+    if src_w >= src_h:
+        src_dir = get_dir([0, src_w * -0.5], rot_rad)
+        dst_dir = np.array([0, dst_w * -0.5], np.float32)
+    else:
+        src_dir = get_dir([src_h * -0.5, 0], rot_rad)
+        dst_dir = np.array([dst_h * -0.5, 0], np.float32)
+
+    src = np.zeros((3, 2), dtype=np.float32)
+    dst = np.zeros((3, 2), dtype=np.float32)
+    src[0, :] = center + scale_tmp * shift     # x,y
+    src[1, :] = center + src_dir + scale_tmp * shift
+    dst[0, :] = [dst_w * 0.5, dst_h * 0.5]
+    dst[1, :] = np.array([dst_w * 0.5, dst_h * 0.5]) + dst_dir
+
+    src[2:, :] = get_3rd_point(src[0, :], src[1, :])
+    dst[2:, :] = get_3rd_point(dst[0, :], dst[1, :])
+
+    if inv:
+        trans = cv2.getAffineTransform(np.float32(dst), np.float32(src))
+    else:
+        trans = cv2.getAffineTransform(np.float32(src), np.float32(dst))
+
+    return trans
+
+
+def get_scale(image_size, resized_size):
+    w, h = image_size
+    w_resized, h_resized = resized_size
+    if w / w_resized < h / h_resized:
+        w_pad = h / h_resized * w_resized
+        h_pad = h
+    else:
+        w_pad = w
+        h_pad = w / w_resized * h_resized
+    scale = np.array([w_pad / 200.0, h_pad / 200.0], dtype=np.float32)
+
+    return scale
+
+
+def get_resize_transform():
+    ori_image_size = np.array([1920, 1080])
+    image_size = np.array([960, 512])
+    r = 0
+    c = np.array([ori_image_size[0] / 2.0, ori_image_size[1] / 2.0])
+    s = get_scale((ori_image_size[0], ori_image_size[1]), image_size)
+    trans = get_affine_transform(c, s, r, image_size)
+    return trans
+
+
 def get_cam():
     cameras = dict()
     M = np.array([[1.0, 0.0, 0.0],
@@ -102,14 +179,16 @@ def offline_profiling_3d():
     cameras = get_cam()
     print(f'Camera keys: {cameras.keys()}')
     print(f'Meta seq: {meta["seq"][0]}')
-    # load faster-voxelpose model and shape
-    model = fastervoxelpose.get(config)
+    resize_transform = get_resize_transform()
 
+    # load faster-voxelpose model
+    model = fastervoxelpose.get(config)
 
     # Prediction
     y = model(input_heatmaps=random_heatmap,
               meta=meta,
-              cameras=cameras)
+              cameras=cameras,
+              resize_transform=resize_transform)
 
 if __name__ == '__main__':
     offline_profiling_3d()

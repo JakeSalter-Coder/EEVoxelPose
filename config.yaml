@@ -5,7 +5,7 @@ CUDNN:
 
 BACKBONE: 'resnet'
 MODEL: 'faster_voxelpose'
-DEVICE: 'cuda:0'
+DEVICE: 'cpu'
 OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 8
