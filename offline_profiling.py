@@ -127,68 +127,93 @@ def get_cam():
             cameras[seq][k] = our_cam
     return cameras
 
-def offline_profiling_2d():
+def offline_profiling_2d(trials=1):
     update_config("config.yaml")
 
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
-    # Read image, convert BGR -> RGB
-    image = cv2.imread('dataset/Panoptic/00_03_00000173.jpg', cv2.IMREAD_COLOR | cv2.IMREAD_IGNORE_ORIENTATION)
-
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        normalize
-    ])
-
-    # Convert to tensor
-    image_tensor = transform(image).float()
-    # Add batch dimension
-    image_tensor = image_tensor.unsqueeze_(0)
+    random_image_tensor = torch.rand(size=(1, 3, 960, 512))
 
     # load resnet model and weights
     model = resnet50.get(config)
     model.load_state_dict(torch.load("pose_resnet50_panoptic.pth.tar"))
 
-    offline_profile = {"2D_profile": {f"Partition {i}":{} for i in range(21)}}
+    offline_profile = {"2D_profile_server": {f"Partition {i}":{} for i in range(21)},
+                       "2D_profile_client": {f"Partition {i}":{} for i in range(21)}}
 
-    trials = 1
+    trials = trials
     for i in range(21):
-        avg = 0
+        client_avg = 0
+        server_avg = 0
         for n in range (trials):
+            #client model
             start = time.time()
-            y = model(image_tensor)
+            client_output = model(x=random_image_tensor, server=False, partition=i)
             end = time.time()
-            avg += end - start
-        offline_profile["2D_profile"][f"Partition {i}"] = avg / trials
+            client_avg += end - start
+            #server model
+            start = time.time()
+            y = model(x=client_output, server=True, partition=i)
+            end = time.time()
+            server_avg += end - start
 
-    print(offline_profile)
+
+        offline_profile["2D_profile_client"][f"Partition {i}"] = client_avg / trials
+        offline_profile["2D_profile_server"][f"Partition {i}"] = server_avg / trials
 
     if not os.path.exists('Profiles/'):
         os.makedirs('Profiles/')
 
+    file = f"Profiles/2D_profile.json"
 
-def offline_profiling_3d():
-    update_config("config.yaml")
+    with open(file, "w") as f:
+        json.dump(offline_profile, f, indent=4)
 
+    print(f"Successfully wrote logs for 2D_profile")
+
+
+def offline_profiling_3d(trials=1):
     # Generate random values for 2D backbone
     random_heatmap = torch.rand(size=(1, 5, 15, 128, 240))
 
     # Define custom Params
     meta = {'seq': ['custom']}
     cameras = get_cam()
-    print(f'Camera keys: {cameras.keys()}')
-    print(f'Meta seq: {meta["seq"][0]}')
-    resize_transform = get_resize_transform()
+    resize_transform = torch.as_tensor(get_resize_transform(), dtype=torch.float, device=config.DEVICE)
+
 
     # load faster-voxelpose model
     model = fastervoxelpose.get(config)
+    model.eval()
+    model.load_state_dict(torch.load("model_best.pth.tar"))
 
-    # Prediction
-    y = model(input_heatmaps=random_heatmap,
-              meta=meta,
-              cameras=cameras,
-              resize_transform=resize_transform)
+    # Timed prediction
+    trials = trials
+    average = 0
+    offline_profile = {"3D_Profile": []}
+    for n in range(trials):
+        start = time.time()
+        y = model(input_heatmaps=random_heatmap,
+                  meta=meta,
+                  cameras=cameras,
+                  resize_transform=resize_transform)
+        end = time.time()
+        average += end - start
+    offline_profile["3D_Profile"] = average / trials
+
+    if not os.path.exists('Profiles/'):
+        os.makedirs('Profiles/')
+
+    file = f"Profiles/3D_profile.json"
+
+    with open(file, "w") as f:
+        json.dump(offline_profile, f, indent=4)
+
+    print("Successfully wrote logs for 3D_profile")
+
 
 if __name__ == '__main__':
-    offline_profiling_3d()
+    update_config("config.yaml")
+    #offline_profiling_2d( trials=100)
+    offline_profiling_3d(trials=100)

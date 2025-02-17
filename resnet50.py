@@ -141,7 +141,7 @@ class ResNet(nn.Module):
 
         return nn.Sequential(*layers)
 
-    def forward(self, x, residual=0, server=True, partition=0):
+    def forward(self, x, server=True, partition=0):
         if server:
             if partition == 0:
                 x = self.conv1(x)
