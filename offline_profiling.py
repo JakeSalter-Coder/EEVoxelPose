@@ -142,7 +142,6 @@ def offline_profiling_2d(trials=1):
     offline_profile = {"2D_profile_server": {f"Partition {i}":{} for i in range(21)},
                        "2D_profile_client": {f"Partition {i}":{} for i in range(21)}}
 
-    trials = trials
     for i in range(21):
         client_avg = 0
         server_avg = 0
@@ -182,16 +181,13 @@ def offline_profiling_3d(trials=1):
     cameras = get_cam()
     resize_transform = torch.as_tensor(get_resize_transform(), dtype=torch.float, device=config.DEVICE)
 
-
     # load faster-voxelpose model
     model = fastervoxelpose.get(config)
     model.eval()
     model.load_state_dict(torch.load("model_best.pth.tar"))
 
     # Timed prediction
-    trials = trials
     average = 0
-    offline_profile = {"3D_Profile": []}
     for n in range(trials):
         start = time.time()
         y = model(input_heatmaps=random_heatmap,
@@ -200,7 +196,7 @@ def offline_profiling_3d(trials=1):
                   resize_transform=resize_transform)
         end = time.time()
         average += end - start
-    offline_profile["3D_Profile"] = average / trials
+    offline_profile = {"3D_Profile": average / trials}
 
     if not os.path.exists('Profiles/'):
         os.makedirs('Profiles/')
