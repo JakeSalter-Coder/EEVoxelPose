@@ -8,6 +8,7 @@ import time
 import os
 import json
 import pickle
+from tqdm import tqdm
 
 import resnet50
 import lib.models.faster_voxelpose as fastervoxelpose
@@ -138,10 +139,10 @@ def offline_profiling_2d(trials=1):
     offline_profile = {"2D_profile_server": {f"Partition {i}":{} for i in range(21)},
                        "2D_profile_client": {f"Partition {i}":{} for i in range(21)}}
 
-    for i in range(21):
+    for i in tqdm(range(21)):
         client_avg = 0
         server_avg = 0
-        for n in range (trials):
+        for n in range(trials):
             #client model
             start = time.time()
             client_output = model(x=random_image_tensor, server=False, partition=i)
@@ -184,7 +185,7 @@ def offline_profiling_3d(trials=1):
 
     # Timed prediction
     average = 0
-    for n in range(trials):
+    for n in tqdm(range(trials)):
         start = time.time()
         y = model(input_heatmaps=random_heatmap,
                   meta=meta,
@@ -227,6 +228,6 @@ def get_intermediate_output():
 
 if __name__ == '__main__':
     update_config("config.yaml")
-    #offline_profiling_2d( trials=100)
+    offline_profiling_2d( trials=5)
     #offline_profiling_3d(trials=20)
-    get_intermediate_output()
+    #get_intermediate_output()
