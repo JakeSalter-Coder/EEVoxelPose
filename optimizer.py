@@ -34,7 +34,7 @@ def get_cost(scalar):
 
     # Find power
     energy_local = [time * faux_mobile_power for time in local_time]
-    energy_upload = [time * faux_mobile_power for time in transmission_time]
+    energy_upload = [time * faux_transmission_power for time in transmission_time]
 
     # Define totals
     total_time = [transmission + local + server for transmission, local, server in zip(transmission_time, local_time, server_time)]
