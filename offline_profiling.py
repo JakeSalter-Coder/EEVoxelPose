@@ -7,6 +7,7 @@ import cv2
 import time
 import os
 import json
+import pickle
 
 import resnet50
 import lib.models.faster_voxelpose as fastervoxelpose
@@ -128,11 +129,6 @@ def get_cam():
     return cameras
 
 def offline_profiling_2d(trials=1):
-    update_config("config.yaml")
-
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-
     random_image_tensor = torch.rand(size=(1, 3, 960, 512))
 
     # load resnet model and weights
@@ -209,7 +205,28 @@ def offline_profiling_3d(trials=1):
     print("Successfully wrote logs for 3D_profile")
 
 
+def get_intermediate_output():
+    random_image_tensor = torch.rand(size=(1, 3, 960, 512))
+
+    # load resnet model and weights
+    model = resnet50.get(config)
+    model.load_state_dict(torch.load("pose_resnet50_panoptic.pth.tar"))
+
+    intermediate_output_size = {}
+    for i in range(21):
+        y = model(x=random_image_tensor, server=False, partition=i)
+        y = pickle.dumps(y)
+        intermediate_output_size[f"Partition {i}"] = len(y)
+
+    file = "Profiles/intermediate_output.json"
+    with open(file, "w") as f:
+        json.dump(intermediate_output_size, f, indent=4)
+
+    print("Successfully wrote intermediate output")
+
+
 if __name__ == '__main__':
     update_config("config.yaml")
     #offline_profiling_2d( trials=100)
-    offline_profiling_3d(trials=100)
+    #offline_profiling_3d(trials=20)
+    get_intermediate_output()
