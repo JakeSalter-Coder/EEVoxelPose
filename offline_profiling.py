@@ -134,7 +134,7 @@ def offline_profiling_2d(trials=1):
 
     # load resnet model and weights
     model = resnet50.get(config)
-    model.load_state_dict(torch.load("pose_resnet50_panoptic.pth.tar"))
+    model.load_state_dict(torch.load("pose_resnet50_panoptic.pth.tar", map_location=torch.device(config.DEVICE)))
 
     offline_profile = {"2D_profile_server": {f"Partition {i}":{} for i in range(21)},
                        "2D_profile_client": {f"Partition {i}":{} for i in range(21)}}
@@ -181,7 +181,7 @@ def offline_profiling_3d(trials=1):
     # load faster-voxelpose model
     model = fastervoxelpose.get(config)
     model.eval()
-    model.load_state_dict(torch.load("model_best.pth.tar"))
+    model.load_state_dict(torch.load("model_best.pth.tar", map_location=torch.device(config.DEVICE)))
 
     # Timed prediction
     average = 0
@@ -211,7 +211,8 @@ def get_intermediate_output():
 
     # load resnet model and weights
     model = resnet50.get(config)
-    model.load_state_dict(torch.load("pose_resnet50_panoptic.pth.tar"))
+
+    model.load_state_dict(torch.load("pose_resnet50_panoptic.pth.tar", map_location=torch.device(config.DEVICE)))
 
     intermediate_output_size = {}
     for i in range(21):
@@ -228,6 +229,6 @@ def get_intermediate_output():
 
 if __name__ == '__main__':
     update_config("config.yaml")
-    offline_profiling_2d( trials=5)
+    offline_profiling_2d( trials=1)
     #offline_profiling_3d(trials=20)
     #get_intermediate_output()
