@@ -14,7 +14,7 @@ intermediate_output_sizes = json.load(open('./Profiles/intermediate_output.json'
 faux_transmission_rate = 10000000 # megabytes/sec
 
 faux_mobile_power = 2.5 # joules/sec
-faux_transmission_power = 3 # joules/sed
+faux_transmission_power = 3 # joules/sec
 
 alpha = 0.01 #scale energy (joules) to match time (sec)
 
