@@ -16,6 +16,8 @@ faux_transmission_rate = 10000000 # megabytes/sec
 faux_mobile_power = 2.5 # joules/sec
 faux_transmission_power = 3 # joules/sed
 
+alpha = 0.01 #scale energy (joules) to match time (sec)
+
 # Scales all the time values by a given scalar
 def scales_profile(profile, scalar):
     return dict((partition, time * scalar) for partition, time in profile.items())
@@ -38,7 +40,6 @@ def get_cost(scalar):
     total_time = [transmission + local + server for transmission, local, server in zip(transmission_time, local_time, server_time)]
     total_energy = [local + upload for local, upload in zip(energy_local, energy_upload)]
 
-    alpha = 0.01
     cost = [time + alpha* energy for time, energy in zip(total_time, total_energy)]
 
     return cost
