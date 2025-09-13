@@ -2,6 +2,9 @@
 /pose_resnet50_panoptic.pth.tar
 /model_best.pth.tar
 
+# Mac 
+.DS_Strore
+
 # Python Compiled Binaries
 .pyc
 venv/
