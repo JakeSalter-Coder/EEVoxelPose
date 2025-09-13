@@ -3,7 +3,7 @@
 /model_best.pth.tar
 
 # Mac 
-.DS_Strore
+.DS_Store
 
 # Python Compiled Binaries
 .pyc
