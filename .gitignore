@@ -1,2 +1,12 @@
+# Large binaries
 /pose_resnet50_panoptic.pth.tar
 /model_best.pth.tar
+
+# Python Compiled Binaries
+.pyc
+venv/
+__pycache__/
+
+# IDE
+.idea/
+.VSCode/

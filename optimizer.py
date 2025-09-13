@@ -11,9 +11,11 @@ profiles_2d_client = profiles_2d['2D_profile_client']
 profiles_2d_server = profiles_2d['2D_profile_server']
 
 intermediate_output_sizes = json.load(open('./Profiles/intermediate_output.json', 'r')) # bytes
-faux_transmission_rate = 10000000 # megabytes/sec
+faux_transmission_rate = (np.random.rand(5) * (30000000 - 10000000)) + 10000000# bytes/sec
 
-faux_mobile_power = 2.5 # joules/sec
+faux_jetson_TX2_power = (np.random.rand(2) * (15-7.5)) + 7.5 # joules/sec
+faux_jetson_nano_power = (np.random.rand(3) * (10-5)) + 5 # joules/sec
+
 faux_transmission_power = 3 # joules/sec
 
 alpha = 0.01 #scale energy (joules) to match time (sec)
@@ -22,22 +24,26 @@ alpha = 0.01 #scale energy (joules) to match time (sec)
 def scales_profile(profile, scalar):
     return dict((partition, time * scalar) for partition, time in profile.items())
 
-def get_cost(scalar):
+def get_cost(scalar, power, transmission_rate):
     # Find Transmission_time
-    transmission_time = [size/faux_transmission_rate for size in intermediate_output_sizes.values()]
+    transmission_time = [size/transmission_rate for size in intermediate_output_sizes.values()]
 
     # Find mobile device computation
     local_time = [time for time in scales_profile(profiles_2d_client, scalar).values()]
 
     # Find server computation
-    server_time = [time for time in scales_profile(profiles_2d_server, 1/8).values()]
+    server_time = [time for time in scales_profile(profiles_2d_server, 1/3).values()]
 
     # Find power
-    energy_local = [time * faux_mobile_power for time in local_time]
+    energy_local = [time * power for time in local_time]
     energy_upload = [time * faux_transmission_power for time in transmission_time]
 
     # Define totals
     total_time = [transmission + local + server for transmission, local, server in zip(transmission_time, local_time, server_time)]
+    if total_time.index(min(total_time)) not in [0, 20]:
+        print(f'fastest partition: {total_time.index(min(total_time))}')
+        print(f'rate: {transmission_rate}')
+        print(f'computation speed scalar: {scalar}')
     total_energy = [local + upload for local, upload in zip(energy_local, energy_upload)]
 
     cost = [time + alpha* energy for time, energy in zip(total_time, total_energy)]
@@ -57,11 +63,25 @@ def Min(c, num_devices):
 
 def Optimize():
     # get cost for the five devices with a theoretical computational scalar of some value
-    c = get_cost(1)
-    c += get_cost(2)
-    c += get_cost(2)
-    c += get_cost(0.5)
-    c += get_cost(0.5)
+    for rate in range(1000000, 100000000, 5000000):
+        for computation_speed in range(5, 15, 1):
+            '''print("\n\nDevice 1")
+            cost = get_cost(1, faux_jetson_nano_power[0], rate)
+            print("\n\nDevice 2")
+            cost = get_cost(2, faux_jetson_nano_power[1], rate)
+            print("\n\nDevice 3")
+            cost = get_cost(2, faux_jetson_nano_power[2], rate)'''
+            print("\n\nDevice 4")
+            cost = get_cost(computation_speed/10, faux_jetson_TX2_power[0], rate)
+            print("\n\nDevice 5")
+            cost = get_cost(computation_speed/10, faux_jetson_TX2_power[1], rate)
+
+
+    c = get_cost(1, faux_jetson_nano_power[0], faux_transmission_rate[0])
+    c += get_cost(2, faux_jetson_nano_power[1], faux_transmission_rate[1])
+    c += get_cost(2, faux_jetson_nano_power[2], faux_transmission_rate[2])
+    c += get_cost(0.5, faux_jetson_TX2_power[0], faux_transmission_rate[3])
+    c += get_cost(0.5, faux_jetson_TX2_power[1], faux_transmission_rate[4])
 
     # find solution
     solution = Min(c, 5)
